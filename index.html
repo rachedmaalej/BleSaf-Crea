@@ -87,6 +87,10 @@
             box-shadow: 0 2px 12px rgba(0,0,0,0.06);
         }
 
+        nav .nav-scroll {
+            position: relative;
+        }
+
         nav ul {
             list-style: none;
             display: flex;
@@ -95,16 +99,34 @@
             flex-wrap: wrap;
         }
 
+        nav li {
+            flex-shrink: 0;
+        }
+
         nav a {
             color: var(--gray-600);
             text-decoration: none;
             font-weight: 500;
             font-size: 0.9rem;
-            transition: color 0.2s;
+            transition: all 0.2s;
+            white-space: nowrap;
+            padding: 8px 0;
+            display: block;
+            border-bottom: 2px solid transparent;
         }
 
         nav a:hover {
             color: var(--primary);
+        }
+
+        nav a.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Scroll fade indicator (hidden on desktop) */
+        .scroll-fade {
+            display: none;
         }
 
         /* Sections */
@@ -613,13 +635,53 @@
                 font-size: 1.1rem;
             }
 
-            /* Navigation */
+            /* Navigation - Scrollable horizontal */
+            nav {
+                padding: 0;
+            }
+            nav .container {
+                padding: 0;
+            }
+            nav .nav-scroll {
+                position: relative;
+            }
             nav ul {
-                gap: 16px 24px;
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 0;
+                justify-content: flex-start;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
                 padding: 0 16px;
+            }
+            nav ul::-webkit-scrollbar {
+                display: none;
+            }
+            nav li {
+                flex-shrink: 0;
             }
             nav a {
                 font-size: 0.85rem;
+                padding: 14px 16px;
+                border-bottom: 2px solid transparent;
+            }
+            nav a:hover,
+            nav a.active {
+                border-bottom-color: var(--primary);
+            }
+
+            /* Scroll fade indicator */
+            .scroll-fade {
+                display: block;
+                position: absolute;
+                right: 0;
+                top: 0;
+                bottom: 0;
+                width: 40px;
+                background: linear-gradient(to left, var(--white) 30%, transparent);
+                pointer-events: none;
+                z-index: 10;
             }
 
             /* Sections */
@@ -670,17 +732,10 @@
                 padding: 0 8px;
             }
 
-            /* Navigation */
-            nav {
-                padding: 12px 0;
-            }
-            nav ul {
-                gap: 8px 16px;
-                justify-content: flex-start;
-            }
+            /* Navigation - Smaller touch targets for small phones */
             nav a {
                 font-size: 0.8rem;
-                padding: 4px 0;
+                padding: 12px 14px;
             }
 
             /* Sections */
@@ -814,14 +869,17 @@
 
 <nav>
     <div class="container">
-        <ul>
-            <li><a href="#resume">Résumé</a></li>
-            <li><a href="#apropos">À Propos</a></li>
-            <li><a href="#parcours-medecin">Parcours Médecin</a></li>
-            <li><a href="#parcours-patient">Parcours Patient</a></li>
-            <li><a href="#identite">Identité de Marque</a></li>
-            <li><a href="#livrables">Livrables</a></li>
-        </ul>
+        <div class="nav-scroll">
+            <ul>
+                <li><a href="#resume">Résumé</a></li>
+                <li><a href="#apropos">À Propos</a></li>
+                <li><a href="#parcours-medecin">Parcours Médecin</a></li>
+                <li><a href="#parcours-patient">Parcours Patient</a></li>
+                <li><a href="#identite">Identité de Marque</a></li>
+                <li><a href="#livrables">Livrables</a></li>
+            </ul>
+            <div class="scroll-fade"></div>
+        </div>
     </div>
 </nav>
 
@@ -1348,6 +1406,55 @@
         <p>BléSaf &bull; Confidentiel &bull; 2025</p>
     </div>
 </footer>
+
+<script>
+// Handle scroll fade indicator visibility
+const navUl = document.querySelector('nav ul');
+const scrollFade = document.querySelector('.scroll-fade');
+
+if (navUl && scrollFade) {
+    function updateScrollFade() {
+        const maxScroll = navUl.scrollWidth - navUl.clientWidth;
+        const currentScroll = navUl.scrollLeft;
+        // Hide fade when scrolled to end (or nearly)
+        scrollFade.style.opacity = currentScroll >= maxScroll - 10 ? '0' : '1';
+    }
+
+    navUl.addEventListener('scroll', updateScrollFade);
+    window.addEventListener('resize', updateScrollFade);
+    updateScrollFade();
+}
+
+// Highlight active nav link based on scroll position
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('nav a');
+
+function highlightNav() {
+    const scrollPos = window.scrollY + 100;
+
+    sections.forEach(section => {
+        const top = section.offsetTop;
+        const height = section.offsetHeight;
+        const id = section.getAttribute('id');
+
+        if (scrollPos >= top && scrollPos < top + height) {
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + id) {
+                    link.classList.add('active');
+                    // Scroll nav to show active item on mobile
+                    if (window.innerWidth <= 768) {
+                        link.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
+                }
+            });
+        }
+    });
+}
+
+window.addEventListener('scroll', highlightNav);
+highlightNav();
+</script>
 
 </body>
 </html>
